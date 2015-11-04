@@ -37,6 +37,11 @@ LS_SHARED = 0
 LS_GREEDY = 1
 LS_WEAK = 2
 
+libsoc = ctypes.CDLL('libsoc.so')
+libsoc.libsoc_gpio_request.restype = ctypes.c_void_p
+libsoc_gpio_callback = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_void_p)
+
+libsoc.libsoc_gpio_get_level.restype = ctypes.c_int
 
 class GPIO(object):
   def __init__(self, pin, mode):
@@ -52,7 +57,19 @@ class GPIO(object):
   def set_level(self, level):
     libsoc.libsoc_gpio_set_level(self._gpio, level)
 
+  def get_level(self):
+    return libsoc.libsoc_gpio_get_level(self._gpio)
 
-libsoc = ctypes.CDLL('libsoc.so')
-libsoc.libsoc_gpio_request.restype = ctypes.c_void_p
+  def set_edge(self, edge):
+    libsoc.libsoc_gpio_set_edge(self._gpio, edge)
+
+  def set_callback_interrupt(self, callback):
+    # callback will be called with the GPIO object passed as the only param
+    def cbk(_):
+      callback(self)
+      return 0
+    self._callback = libsoc_gpio_callback(cbk)
+    libsoc.libsoc_gpio_callback_interrupt(self._gpio, self._callback, None)
+    
+
   
