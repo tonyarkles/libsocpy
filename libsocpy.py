@@ -49,6 +49,7 @@ class GPIO(object):
 
   def __del__(self):
     libsoc.libsoc_gpio_free(self._gpio)
+    self._callback = None
     self._gpio = None
 
   def set_direction(self, direction):
